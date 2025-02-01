@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"html/template"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,7 +15,12 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello world"))
+		t, _ := template.New("home").ParseFiles("ui/html/base.html", "ui/html/pages/index.html")
+		err := t.ExecuteTemplate(w, "base", nil)
+		if err != nil {
+			log.Println(err)
+		}
+
 	})
 
 	srv := &http.Server{
