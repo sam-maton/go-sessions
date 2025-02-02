@@ -15,12 +15,19 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		t, _ := template.New("home").ParseFiles("ui/html/base.html", "ui/html/pages/index.html")
+		t, _ := template.New("home").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/index.html")
 		err := t.ExecuteTemplate(w, "base", nil)
 		if err != nil {
 			log.Println(err)
 		}
+	})
 
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		t, _ := template.New("login").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/login.html")
+		err := t.ExecuteTemplate(w, "base", nil)
+		if err != nil {
+			log.Println(err)
+		}
 	})
 
 	srv := &http.Server{
