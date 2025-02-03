@@ -4,14 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
   <title>{{template "title" .}} - Go Session</title>
 </head>
-<body>
-  <header>
-    <h1>Header text</h1>
+<body class="bg-gray-100 text-gray-900">
+  <header class="bg-blue-500 text-white p-4">
+    <h1 class="text-2xl font-bold">Header text</h1>
   </header>
   {{template "nav" .}}
-  <main>
+  <main class="p-4">
     {{template "main" .}}
   </main>
 </body>

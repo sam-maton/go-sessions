@@ -1,8 +1,12 @@
 {{define "nav"}}
-<nav>
-  <a href="/">Home</a>
-  <a href="/protected">Protected</a>
-  <a href="/login">Login</a>
-  <a href="/logout">Logout</a>
+<nav class="flex justify-between items-center p-4 bg-gray-200 text-black">
+  <div class="flex-1 flex justify-center space-x-4">
+    <a href="/" class="hover:text-gray-600">Home</a>
+    <a href="/protected" class="hover:text-gray-600">Protected</a>
+  </div>
+  <div class="space-x-4">
+    <a href="/login" class="hover:text-gray-600">Login</a>
+    <a href="/logout" class="hover:text-gray-600">Logout</a>
+  </div>
 </nav>
 {{end}}

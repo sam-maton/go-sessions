@@ -26,7 +26,7 @@ func main() {
 		}
 	})
 
-	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /login", func(w http.ResponseWriter, r *http.Request) {
 		t, _ := template.New("login").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/login.html")
 		err := t.ExecuteTemplate(w, "base", nil)
 		if err != nil {
@@ -34,7 +34,11 @@ func main() {
 		}
 	})
 
-	mux.HandleFunc("/protected", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+
+	mux.HandleFunc("GET /protected", func(w http.ResponseWriter, r *http.Request) {
 		t, _ := template.New("login").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/protected.html")
 		err := t.ExecuteTemplate(w, "base", nil)
 		if err != nil {
@@ -42,8 +46,8 @@ func main() {
 		}
 	})
 
-	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/", http.StatusOK)
+	mux.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 
 	srv := &http.Server{
