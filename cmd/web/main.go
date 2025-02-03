@@ -2,12 +2,22 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 	"time"
+)
+
+var (
+	sessions     = make(map[string]bool)
+	sessionMutex = &sync.Mutex{}
+	users        = map[string]string{
+		"test@email.com": "password123",
+	}
 )
 
 func main() {
@@ -19,31 +29,42 @@ func main() {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		t, _ := template.New("home").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/index.html")
-		err := t.ExecuteTemplate(w, "base", nil)
-		if err != nil {
-			log.Println(err)
-		}
+		render(w, "index")
 	})
 
 	mux.HandleFunc("GET /login", func(w http.ResponseWriter, r *http.Request) {
-		t, _ := template.New("login").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/login.html")
-		err := t.ExecuteTemplate(w, "base", nil)
-		if err != nil {
-			log.Println(err)
-		}
+		render(w, "login")
 	})
 
 	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 
+		email := r.PostForm.Get("email")
+		password := r.PostForm.Get("password")
+
+		pw := users[email]
+
+		if pw != password {
+			fmt.Println("No password")
+		}
+
+		fmt.Printf("Login user with email %s and password %s", email, password)
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 
 	mux.HandleFunc("GET /protected", func(w http.ResponseWriter, r *http.Request) {
-		t, _ := template.New("login").ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", "ui/html/pages/protected.html")
-		err := t.ExecuteTemplate(w, "base", nil)
+		_, err := r.Cookie("session_id")
 		if err != nil {
-			log.Println(err)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
 		}
+
+		render(w, "protected")
 	})
 
 	mux.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
@@ -62,4 +83,12 @@ func main() {
 	err := srv.ListenAndServe()
 	slog.Error(err.Error())
 	os.Exit(1)
+}
+
+func render(w http.ResponseWriter, page string) {
+	t, _ := template.New(page).ParseFiles("ui/html/base.html", "ui/html/partials/nav.html", fmt.Sprintf("ui/html/pages/%s.html", page))
+	err := t.ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		log.Println(err)
+	}
 }
