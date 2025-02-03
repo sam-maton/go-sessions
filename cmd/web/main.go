@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"html/template"
@@ -52,14 +54,35 @@ func main() {
 			fmt.Println("No password")
 		}
 
-		fmt.Printf("Login user with email %s and password %s", email, password)
+		sessionID, err := generateRandomSession()
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		sessionMutex.Lock()
+		sessions[sessionID] = true
+		sessionMutex.Unlock()
+
+		http.SetCookie(w, &http.Cookie{
+			Name:   "session_id",
+			Value:  sessionID,
+			Path:   "/",
+			MaxAge: 600,
+		})
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 
 	mux.HandleFunc("GET /protected", func(w http.ResponseWriter, r *http.Request) {
-		_, err := r.Cookie("session_id")
+		cookie, err := r.Cookie("session_id")
 		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		sessionMutex.Lock()
+		authenticated, ok := sessions[cookie.Value]
+		if !authenticated || !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -68,7 +91,21 @@ func main() {
 	})
 
 	mux.HandleFunc("GET /logout", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		fmt.Println("logout func")
+		cookie, err := r.Cookie("session_id")
+		if err == nil {
+			sessionMutex.Lock()
+			delete(sessions, cookie.Value)
+			sessionMutex.Unlock()
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:   "session_id",
+			Value:  "",
+			Path:   "/",
+			MaxAge: -1,
+		})
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	})
 
 	srv := &http.Server{
@@ -91,4 +128,17 @@ func render(w http.ResponseWriter, page string) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func generateRandomSession() (string, error) {
+	b := make([]byte, 16)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Println("Error generating random session ID:", err)
+		return "", err
+	}
+
+	// Encode the bytes as a hex string and return it
+	return hex.EncodeToString(b), nil
 }
